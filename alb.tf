@@ -1,5 +1,5 @@
 
-resource "aws_security_group" "lb_sg" {
+resource "aws_security_group" "alb_sg" {
   name        = "alb_sg"
   description = "ALB security group to scaling group"
   vpc_id = aws_vpc.default.id
@@ -30,27 +30,37 @@ resource "aws_lb" "load_balancer" {
   #expuesto públicamente
   internal = false
 
-  security_groups = [aws_security_group.lb_sg.id]
+  security_groups = [aws_security_group.alb_sg.id]
   load_balancer_type = "application"
-  /*
-  si tipo es network y queremos asociar una eip
-  subnet_mapping {
-    subnet_id     = aws_subnet.public_subnet.id
-    allocation_id = aws_eip.eip_lb.id
-  }
-  */
 
-  subnets = [aws_subnet.private_subnet_1b.id, aws_subnet.private_subnet_1a.id]
+  subnets = [aws_subnet.public_subnet_b.id, aws_subnet.public_subnet_a.id]
 
-  /*si queremos ssl
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = aws_acm_certificate.this.arn
-  */
 
-  #si queremos balancear entre difierentes zonas
+  #si queremos balancear entre difierentes availability zones
   enable_cross_zone_load_balancing   = true
 
 }
+
+/* for testing purposes
+resource "aws_lb_listener" "lb_listener_http" {
+
+  load_balancer_arn = aws_lb.load_balancer.arn
+
+  protocol          = "HTTP"
+  port              = 80
+
+  default_action {
+    type             = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "HELLO!"
+      status_code  = "200"
+    }
+    target_group_arn = aws_lb_target_group.lb_target_group.arn
+  }
+}
+*/
+
 
 resource "aws_lb_listener" "lb_listener_http" {
 
@@ -65,17 +75,17 @@ resource "aws_lb_listener" "lb_listener_http" {
   }
 }
 
+
 resource "aws_lb_target_group" "lb_target_group" {
 
   port        = 80
-  protocol = "HTTP"
+  protocol    = "HTTP"
   vpc_id      = aws_vpc.default.id
 
 
 
   depends_on = [
     aws_lb.load_balancer,
-    aws_autoscaling_group.business
   ]
   deregistration_delay    = 90
 
@@ -91,7 +101,6 @@ health_check {
 }
 
 resource "aws_autoscaling_attachment" "autoscaling_attachment" {
-  autoscaling_group_name = aws_autoscaling_group.business.name
+  autoscaling_group_name = aws_autoscaling_group.web.name
   alb_target_group_arn = aws_lb_target_group.lb_target_group.arn
-
 }

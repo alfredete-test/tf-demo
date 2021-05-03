@@ -1,5 +1,5 @@
 #security group por defecto para permitir entrada por el puerto 80
-resource "aws_security_group" "allow_http_and_ssh_asg" {
+resource "aws_security_group" "allow_http_asg" {
   name        = "allow_http_and_ssh_asg"
   vpc_id = aws_vpc.default.id
 
@@ -7,19 +7,16 @@ resource "aws_security_group" "allow_http_and_ssh_asg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    #cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"]
 
-    security_groups = [aws_security_group.lb_sg.id]
+    #security_groups = [aws_security_group.alb_sg.id]
   }
-
-  /*
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-  */
 
 
   egress {
@@ -41,8 +38,8 @@ resource "aws_launch_configuration" "back_launch_config" {
   image_id = "ami-0e8f77705e947bcda"
   instance_type = "t2.micro"
 
-  security_groups = [ aws_security_group.allow_http_and_ssh_asg.id ]
-  associate_public_ip_address = false
+  security_groups = [ aws_security_group.allow_http_asg.id ]
+  associate_public_ip_address = true
 
   #insertamos el user_data desde la variable de forma que se pueda modificar para diferentes propósitos
   user_data = <<USER_DATA
@@ -54,18 +51,7 @@ chmod 777 /var/www/html -R
 echo "$(curl http://169.254.169.254/latest/meta-data/local-ipv4)" > /var/www/html/index.html
 systemctl apache2 reload
   USER_DATA
-          /*
-  <<USER_DATA
-#!/bin/bash
-yum update
-yum -y install nginx
-echo "$(curl http://169.254.169.254/latest/meta-data/local-ipv4)" > /usr/share/nginx/html/index.html
-chkconfig nginx on
-service nginx start
-  USER_DATA
-  */
 
-  #lo desactivo para la demo, además no es accesible
   key_name = aws_key_pair.from_local.key_name
 
   #se crea una nueva instancia antes de destruir una anterior
@@ -75,7 +61,7 @@ service nginx start
 }
 
 
-resource "aws_autoscaling_group" "business" {
+resource "aws_autoscaling_group" "web" {
   name = "${aws_launch_configuration.back_launch_config.name}-asg"
 
   min_size             = 2
@@ -95,9 +81,7 @@ resource "aws_autoscaling_group" "business" {
 
   metrics_granularity = "1Minute"
 
-  vpc_zone_identifier  = [
-    aws_subnet.private_subnet_1a.id,aws_subnet.private_subnet_1b.id
-  ]
+  vpc_zone_identifier  = [aws_subnet.private_subnet_a.id,aws_subnet.private_subnet_b.id]
 
   lifecycle {
     create_before_destroy = true
@@ -116,7 +100,7 @@ resource "aws_autoscaling_policy" "back_policy_up" {
   scaling_adjustment = 1
   adjustment_type = "ChangeInCapacity"
   cooldown = 300
-  autoscaling_group_name = aws_autoscaling_group.business.name
+  autoscaling_group_name = aws_autoscaling_group.web.name
 }
 
 resource "aws_cloudwatch_metric_alarm" "back_cpu_alarm_up" {
@@ -130,7 +114,7 @@ resource "aws_cloudwatch_metric_alarm" "back_cpu_alarm_up" {
   threshold = "60"
 
   dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.business.name
+    AutoScalingGroupName = aws_autoscaling_group.web.name
   }
 
   alarm_description = "This metric monitor EC2 instance CPU utilization"
@@ -142,7 +126,7 @@ resource "aws_autoscaling_policy" "back_policy_down" {
   scaling_adjustment = -1
   adjustment_type = "ChangeInCapacity"
   cooldown = 300
-  autoscaling_group_name = aws_autoscaling_group.business.name
+  autoscaling_group_name = aws_autoscaling_group.web.name
 }
 
 resource "aws_cloudwatch_metric_alarm" "back_cpu_alarm_down" {
@@ -156,7 +140,7 @@ resource "aws_cloudwatch_metric_alarm" "back_cpu_alarm_down" {
   threshold = "10"
 
   dimensions = {
-    AutoScalingGroupName = aws_autoscaling_group.business.name
+    AutoScalingGroupName = aws_autoscaling_group.web.name
   }
 
   alarm_description = "This metric monitor EC2 instance CPU utilization"
