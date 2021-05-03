@@ -12,12 +12,14 @@ resource "aws_security_group" "allow_http_and_ssh_asg" {
     security_groups = [aws_security_group.lb_sg.id]
   }
 
+  /*
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  */
 
 
   egress {
@@ -28,11 +30,11 @@ resource "aws_security_group" "allow_http_and_ssh_asg" {
   }
 
   tags = {
-    Name = "HTTP and SSH"
+    Name = "HTTP"# and SSH"
   }
 }
 
-#launch configuration, utilizando la última versión de la ami de amazon
+#launch configuration, utilizando ubuntu
 resource "aws_launch_configuration" "back_launch_config" {
   name_prefix = "server-"
 

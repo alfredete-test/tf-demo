@@ -74,7 +74,8 @@ resource "aws_lb_target_group" "lb_target_group" {
 
 
   depends_on = [
-    aws_lb.load_balancer
+    aws_lb.load_balancer,
+    aws_autoscaling_group.business
   ]
   deregistration_delay    = 90
 
