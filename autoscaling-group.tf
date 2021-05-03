@@ -7,15 +7,9 @@ resource "aws_security_group" "allow_http_asg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    #cidr_blocks = ["0.0.0.0/0"]
 
-    #security_groups = [aws_security_group.alb_sg.id]
-  }
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    security_groups = [aws_security_group.alb_sg.id]
   }
 
 
@@ -39,7 +33,7 @@ resource "aws_launch_configuration" "back_launch_config" {
   instance_type = "t2.micro"
 
   security_groups = [ aws_security_group.allow_http_asg.id ]
-  associate_public_ip_address = true
+  associate_public_ip_address = false
 
   #insertamos el user_data desde la variable de forma que se pueda modificar para diferentes propósitos
   user_data = <<USER_DATA

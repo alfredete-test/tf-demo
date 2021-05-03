@@ -14,7 +14,7 @@ resource "aws_internet_gateway" "vpc_igw" {
     Name = "Default VPC Internet Gateway"
   }
 }
-
+/*
 resource "aws_default_route_table" "main_rt" {
   default_route_table_id = aws_vpc.default.default_route_table_id
 
@@ -24,6 +24,7 @@ resource "aws_default_route_table" "main_rt" {
   }
 
 }
+*/
 
 resource "aws_subnet" "public_subnet_a" {
   vpc_id     = aws_vpc.default.id
