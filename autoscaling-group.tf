@@ -29,7 +29,7 @@ resource "aws_security_group" "allow_http_asg" {
 resource "aws_launch_configuration" "back_launch_config" {
   name_prefix = "server-"
 
-  image_id = "ami-0e8f77705e947bcda"
+  image_id = var.ami
   instance_type = "t2.micro"
 
   security_groups = [ aws_security_group.allow_http_asg.id ]
