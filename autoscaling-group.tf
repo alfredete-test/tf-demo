@@ -46,7 +46,8 @@ echo "$(curl http://169.254.169.254/latest/meta-data/local-ipv4)" > /var/www/htm
 systemctl apache2 reload
   USER_DATA
 
-  key_name = aws_key_pair.from_local.key_name
+  #lo quito puesto que no hay visibilidad igualmente
+  #key_name = aws_key_pair.from_local.key_name
 
   #se crea una nueva instancia antes de destruir una anterior
   lifecycle {
