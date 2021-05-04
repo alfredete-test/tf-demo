@@ -59,7 +59,7 @@ systemctl apache2 reload
 resource "aws_autoscaling_group" "web" {
   name = "${aws_launch_configuration.back_launch_config.name}-asg"
 
-  min_size             = 2
+  min_size             = 1
   desired_capacity     = 2
   max_size             = 4
 
